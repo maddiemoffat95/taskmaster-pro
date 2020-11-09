@@ -53,13 +53,9 @@ var createTask = function (taskText, taskDate, taskList) {
     var taskP = $("<p>")
         .addClass("m-1")
         .text(taskText);
-
-    // append span and p element to parent li
-    taskLi.append(taskSpan, taskP);
-
-
-    // append to ul list on the page
-    $("#list-" + taskList).append(taskLi);
+    taskLi.append(taskSpan,taskP);
+    auditTask(taskLi);
+    $("#list-"+taskList).append(taskLi);
 };
 
 var loadTasks = function () {
@@ -117,23 +113,23 @@ $(".list-group").on("blur", "textarea", function () {
 });
 
 $("list-group").on("click", "span", function () {
-    var date = $(this)
-        .text()
-    trim();
-
-    var dateInput = $("<input>")
-        .attr("tupe", "text")
-        .addClass("form-control")
-        .val(date);
+    var date = $(this).text().trim();
+    var dateInput =$("<input").attr("type", "text").addClass("form-control").val(date);
 
     $(this).replaceWith(dateInput);
+    
+    dateInput.datepicker({
+        minDate: 1,
+        onClose: function(){
+            $(this).trigger("change");
+        }
+    });
     dateInput.trigger("focus");
 });
 
-$(this).on("blur", "input[type='text]", function () {
+$(this).on("change", "input[type='text]", function () {
     var date = $(this)
-    val()
-    trim();
+    val();
 
     var status = $(this)
         .closest(".list-group")
@@ -147,7 +143,10 @@ $(this).on("blur", "input[type='text]", function () {
     task[status][index].date = date;
     saveTasks();
 
+    var taskSpan=$("<span").addClass("badge badge-primary badge-pill").text(date);
     $(this).replaceWith(taskSpan);
+
+    auditTask($(taskSpan).closest(",list-group-item"));
 });
 
 // modal was triggered
@@ -208,6 +207,23 @@ $("#remove-tasks").on("click", function () {
     saveTasks();
 });
 
+$("#modalDueDate").datepicker({
+    minDate: 1
+});
+
+var auditTask=function(taskE1) {
+    var date=$(taskE1).find("span").text().trim();
+
+    var time=moment(date,"L").set("hour",17);
+    $(taskE1).removeClass("list-group-itme-warning list-group-item-danger");
+
+    if(moment().ifAfter(time)) {
+        $(taskE1).addClass("list-group-item-danger");
+    }
+    else if(Math.abs(moment().diff(time,"days"))<=2){
+        $(taskE1).addClass("list-group-item-warning");
+    }
+};
 
 // load tasks for the first time
 loadTasks();
